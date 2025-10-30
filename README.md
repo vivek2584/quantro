@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Student Expense Tracker
 
-## Getting Started
+A web app for tracking expenses with budgets, categories, and analytics. Built because spreadsheets are boring.
 
-First, run the development server:
+## What it does
+
+- Track your expenses with categories
+- Set monthly budgets and see if you're overspending
+- Category-specific budgets (because you know you spend too much on food)
+- Charts and analytics to visualize where your money goes
+- Dark mode (obviously)
+- Real-time updates with Firebase
+
+## Tech Stack
+
+- Next.js 13 (App Router)
+- Firebase (Auth + Firestore)
+- TypeScript
+- Tailwind CSS
+- Recharts for graphs
+- Framer Motion for animations
+
+## Setup
+
+Clone and install:
+
+```bash
+npm install
+```
+
+Create a `.env.local` file with your Firebase config:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+```
+
+Run the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Dashboard**
+- Monthly budget overview with progress bars
+- Category-wise spending breakdown
+- Daily average vs budget allowance
+- Recent transactions list
 
-## Learn More
+**Budget Management**
+- Set overall monthly budget
+- Category-specific budgets
+- Visual indicators when you're close to limits
 
-To learn more about Next.js, take a look at the following resources:
+**Analytics**
+- Spending trends over time
+- Category breakdown pie chart
+- Monthly comparison charts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Categories**
+- Create custom categories with colors
+- Edit or delete categories
+- Default categories included
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+app/
+  ├── dashboard/        # Main dashboard
+  ├── add-expense/      # Add new expense
+  ├── edit-expense/     # Edit existing expense
+  └── login/            # Auth page
+components/             # Reusable components
+context/                # React context (Auth, Dark Mode)
+firebase/               # Firebase config
+lib/                    # Firestore helpers
+types/                  # TypeScript types
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Firebase Setup
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Create a Firebase project
+2. Enable Authentication (Email/Password)
+3. Create a Firestore database
+4. Add your config to `.env.local`
+5. Deploy Firestore rules from `firestore.rules`
+
+## License
+
+Do whatever you want with it.
