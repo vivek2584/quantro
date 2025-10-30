@@ -40,3 +40,14 @@ export interface UserProfile {
   monthlyBudget?: number;
   currency?: string;
 }
+
+export interface SavingsGoal {
+  id?: string;
+  userId: string;
+  goalName: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: Date | string;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}

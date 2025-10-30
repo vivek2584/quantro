@@ -7,6 +7,7 @@ A web app for tracking expenses with budgets, categories, and analytics. Built b
 - Track your expenses with categories
 - Set monthly budgets and see if you're overspending
 - Category-specific budgets (because you know you spend too much on food)
+- **Set savings goals and track your progress** (new!)
 - Charts and analytics to visualize where your money goes
 - Dark mode (obviously)
 - Real-time updates with Firebase
@@ -60,6 +61,14 @@ Open [localhost:3000](http://localhost:3000)
 - Category-specific budgets
 - Visual indicators when you're close to limits
 
+**Savings Goals**
+- Create multiple savings goals with target amounts
+- Track progress with visual progress bars
+- Set optional deadlines for your goals
+- Update saved amounts as you progress
+- View summary of all your savings goals
+- Get visual feedback when goals are achieved
+
 **Analytics**
 - Spending trends over time
 - Category breakdown pie chart
@@ -74,14 +83,14 @@ Open [localhost:3000](http://localhost:3000)
 
 ```
 app/
-  ├── dashboard/        # Main dashboard
+  ├── dashboard/        # Main dashboard with savings goals
   ├── add-expense/      # Add new expense
   ├── edit-expense/     # Edit existing expense
   └── login/            # Auth page
 components/             # Reusable components
 context/                # React context (Auth, Dark Mode)
 firebase/               # Firebase config
-lib/                    # Firestore helpers
+lib/                    # Firestore helpers (expenses, budgets, savings goals)
 types/                  # TypeScript types
 ```
 

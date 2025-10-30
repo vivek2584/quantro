@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Expense, Category, Budget } from "@/types";
+import { Expense, Category, Budget, SavingsGoal } from "@/types";
 import Link from "next/link";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { motion } from "framer-motion";
@@ -17,6 +17,7 @@ import {
   FiEdit2,
   FiTrash2,
   FiX,
+  FiTarget,
 } from "react-icons/fi";
 import { TbCurrencyRupee } from "react-icons/tb";
 import {
@@ -47,6 +48,10 @@ import {
   getBudget,
   saveBudget,
   initializeDefaultCategories,
+  getSavingsGoals,
+  addSavingsGoal,
+  updateSavingsGoal,
+  deleteSavingsGoal,
 } from "@/lib/firestore";
 
 const COLORS = [
@@ -80,7 +85,7 @@ export default function Dashboard() {
   const { user, logOut } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "overview" | "transactions" | "analytics" | "settings"
+    "overview" | "transactions" | "analytics" | "settings" | "savings"
   >("overview");
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -101,6 +106,15 @@ export default function Dashboard() {
   const [categoryBudgets, setCategoryBudgets] = useState<{
     [key: string]: number;
   }>({});
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
+  const [showSavingsModal, setShowSavingsModal] = useState(false);
+  const [editingSavingsGoal, setEditingSavingsGoal] = useState<SavingsGoal | null>(null);
+  const [newSavingsGoal, setNewSavingsGoal] = useState({
+    goalName: "",
+    targetAmount: 0,
+    currentAmount: 0,
+    deadline: "",
+  });
 
   const colorOptions = [
     "bg-blue-500",
@@ -184,15 +198,17 @@ export default function Dashboard() {
         setIsLoading(true);
         await initializeDefaultCategories(user.uid);
 
-        const [expensesData, categoriesData, budgetData] = await Promise.all([
+        const [expensesData, categoriesData, budgetData, savingsGoalsData] = await Promise.all([
           getExpenses(user.uid),
           getCategories(user.uid),
           getBudget(user.uid),
+          getSavingsGoals(user.uid),
         ]);
 
         setExpenses(expensesData);
         setCategories(categoriesData);
         setBudget(budgetData);
+        setSavingsGoals(savingsGoalsData);
         if (budgetData) {
           setMonthlyBudgetAmount(budgetData.monthlyBudget);
           setCategoryBudgets(budgetData.categories || {});
@@ -305,6 +321,98 @@ export default function Dashboard() {
     }
   };
 
+  const handleAddSavingsGoal = async () => {
+    if (!user || !newSavingsGoal.goalName.trim() || newSavingsGoal.targetAmount <= 0) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      const goalData: any = {
+        userId: user.uid,
+        goalName: newSavingsGoal.goalName,
+        targetAmount: newSavingsGoal.targetAmount,
+        currentAmount: newSavingsGoal.currentAmount,
+      };
+
+      // Only add deadline if it's not empty
+      if (newSavingsGoal.deadline && newSavingsGoal.deadline.trim() !== '') {
+        goalData.deadline = newSavingsGoal.deadline;
+      }
+
+      console.log('Goal data being sent (should NOT have deadline if empty):', goalData);
+      console.log('Has deadline property?', 'deadline' in goalData);
+
+      const id = await addSavingsGoal(goalData);
+
+      const goal: SavingsGoal = {
+        id,
+        userId: user.uid,
+        ...newSavingsGoal,
+      };
+      setSavingsGoals([...savingsGoals, goal]);
+      setNewSavingsGoal({ goalName: "", targetAmount: 0, currentAmount: 0, deadline: "" });
+      setShowSavingsModal(false);
+      toast.success("Savings goal added successfully");
+    } catch (error: any) {
+      console.error("Error adding savings goal:", error);
+      console.error("Error message:", error?.message);
+      console.error("Error code:", error?.code);
+      toast.error(`Failed to add savings goal: ${error?.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleUpdateSavingsGoal = async () => {
+    if (!editingSavingsGoal || !newSavingsGoal.goalName.trim() || newSavingsGoal.targetAmount <= 0) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      const updateData: any = {
+        goalName: newSavingsGoal.goalName,
+        targetAmount: newSavingsGoal.targetAmount,
+        currentAmount: newSavingsGoal.currentAmount,
+      };
+
+      // Only add deadline if it's not empty
+      if (newSavingsGoal.deadline && newSavingsGoal.deadline.trim() !== '') {
+        updateData.deadline = newSavingsGoal.deadline;
+      }
+
+      await updateSavingsGoal(editingSavingsGoal.id!, updateData);
+
+      setSavingsGoals(
+        savingsGoals.map((g) =>
+          g.id === editingSavingsGoal.id
+            ? { ...g, ...newSavingsGoal }
+            : g
+        )
+      );
+      setEditingSavingsGoal(null);
+      setNewSavingsGoal({ goalName: "", targetAmount: 0, currentAmount: 0, deadline: "" });
+      setShowSavingsModal(false);
+      toast.success("Savings goal updated successfully");
+    } catch (error) {
+      console.error("Error updating savings goal:", error);
+      toast.error("Failed to update savings goal");
+    }
+  };
+
+  const handleDeleteSavingsGoal = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this savings goal?"))
+      return;
+
+    try {
+      await deleteSavingsGoal(id);
+      setSavingsGoals(savingsGoals.filter((g) => g.id !== id));
+      toast.success("Savings goal deleted successfully");
+    } catch (error) {
+      console.error("Error deleting savings goal:", error);
+      toast.error("Failed to delete savings goal");
+    }
+  };
+
   // Analytics data
   const categoryBreakdown = categories
     .map((category) => {
@@ -374,6 +482,12 @@ export default function Dashboard() {
             onClick={() => setActiveTab("analytics")}
           />
           <NavItem
+            icon={<FiTarget />}
+            label="Savings Goals"
+            active={activeTab === "savings"}
+            onClick={() => setActiveTab("savings")}
+          />
+          <NavItem
             icon={<FiSettings />}
             label="Settings"
             active={activeTab === "settings"}
@@ -402,6 +516,7 @@ export default function Dashboard() {
             {activeTab === "overview" && "Dashboard"}
             {activeTab === "transactions" && "Transactions"}
             {activeTab === "analytics" && "Analytics"}
+            {activeTab === "savings" && "Savings Goals"}
             {activeTab === "settings" && "Settings"}
           </h2>
           <div className="flex items-center gap-3">
@@ -836,6 +951,189 @@ export default function Dashboard() {
           </div>
         )}
 
+        {activeTab === "savings" && (
+          <div className="space-y-6">
+            {/* Add Savings Goal Button */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  setEditingSavingsGoal(null);
+                  setNewSavingsGoal({ goalName: "", targetAmount: 0, currentAmount: 0, deadline: "" });
+                  setShowSavingsModal(true);
+                }}
+                className="flex items-center px-4 py-2 bg-blue-600 dark:bg-teal-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-teal-400 transition-colors shadow-sm"
+              >
+                <FiPlus className="mr-2" />
+                Add Savings Goal
+              </button>
+            </div>
+
+            {/* Savings Goals Grid */}
+            {savingsGoals.length === 0 ? (
+              <div className="bg-white dark:bg-slate-800 dark:border dark:border-slate-700 p-12 rounded-xl shadow text-center">
+                <FiTarget className="mx-auto text-gray-400 dark:text-gray-600 mb-4" size={48} />
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  No savings goals yet. Start by creating your first goal!
+                </p>
+                <button
+                  onClick={() => {
+                    setEditingSavingsGoal(null);
+                    setNewSavingsGoal({ goalName: "", targetAmount: 0, currentAmount: 0, deadline: "" });
+                    setShowSavingsModal(true);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Create Your First Goal
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {savingsGoals.map((goal) => {
+                  const progress = (goal.currentAmount / goal.targetAmount) * 100;
+                  const isCompleted = progress >= 100;
+                  const daysLeft = goal.deadline 
+                    ? Math.ceil((new Date(goal.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+                    : null;
+
+                  return (
+                    <div
+                      key={goal.id}
+                      className="bg-white dark:bg-slate-800 dark:border dark:border-slate-700 p-6 rounded-xl shadow hover:shadow-lg transition-shadow"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                            {goal.goalName}
+                          </h3>
+                          {goal.deadline && (
+                            <p className={`text-sm ${
+                              daysLeft && daysLeft < 0 
+                                ? 'text-red-600 dark:text-red-400' 
+                                : daysLeft && daysLeft < 30 
+                                ? 'text-amber-600 dark:text-amber-400' 
+                                : 'text-gray-500 dark:text-gray-400'
+                            }`}>
+                              {daysLeft && daysLeft < 0 
+                                ? `Overdue by ${Math.abs(daysLeft)} days`
+                                : daysLeft 
+                                ? `${daysLeft} days left`
+                                : 'No deadline'}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingSavingsGoal(goal);
+                              setNewSavingsGoal({
+                                goalName: goal.goalName,
+                                targetAmount: goal.targetAmount,
+                                currentAmount: goal.currentAmount,
+                                deadline: goal.deadline 
+                                  ? (goal.deadline instanceof Date 
+                                    ? goal.deadline.toISOString().split('T')[0] 
+                                    : new Date(goal.deadline).toISOString().split('T')[0])
+                                  : "",
+                              });
+                              setShowSavingsModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 dark:text-teal-400 dark:hover:text-teal-300"
+                          >
+                            <FiEdit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => goal.id && handleDeleteSavingsGoal(goal.id)}
+                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                          >
+                            <FiTrash2 size={18} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Progress Circle or Bar */}
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            ₹{goal.currentAmount.toLocaleString('en-IN')} saved
+                          </span>
+                          <span className={`font-semibold ${
+                            isCompleted 
+                              ? 'text-green-600 dark:text-green-400' 
+                              : 'text-gray-900 dark:text-white'
+                          }`}>
+                            {Math.min(progress, 100).toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                          <div
+                            className={`h-3 rounded-full transition-all ${
+                              isCompleted 
+                                ? "bg-green-500" 
+                                : progress > 75 
+                                ? "bg-blue-500" 
+                                : progress > 50 
+                                ? "bg-teal-500" 
+                                : "bg-amber-500"
+                            }`}
+                            style={{ width: `${Math.min(progress, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Target Amount */}
+                      <div className="pt-4 border-t dark:border-gray-700">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Target</span>
+                          <span className="text-lg font-bold text-gray-900 dark:text-white">
+                            ₹{goal.targetAmount.toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Remaining</span>
+                          <span className={`text-sm font-semibold ${
+                            isCompleted 
+                              ? 'text-green-600 dark:text-green-400' 
+                              : 'text-gray-900 dark:text-white'
+                          }`}>
+                            {isCompleted 
+                              ? 'Goal Achieved! 🎉' 
+                              : `₹${(goal.targetAmount - goal.currentAmount).toLocaleString('en-IN')}`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Summary Card */}
+            {savingsGoals.length > 0 && (
+              <div className="bg-gradient-to-br from-blue-500 to-teal-500 dark:from-teal-600 dark:to-blue-600 p-6 rounded-xl shadow-lg text-white">
+                <h3 className="text-xl font-bold mb-4">Savings Summary</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg">
+                    <p className="text-sm text-white/80 mb-1">Total Goals</p>
+                    <p className="text-2xl font-bold">{savingsGoals.length}</p>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg">
+                    <p className="text-sm text-white/80 mb-1">Total Saved</p>
+                    <p className="text-2xl font-bold">
+                      ₹{savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0).toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg">
+                    <p className="text-sm text-white/80 mb-1">Target Amount</p>
+                    <p className="text-2xl font-bold">
+                      ₹{savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0).toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === "settings" && (
           <div className="space-y-6">
             {/* Account Settings */}
@@ -1021,6 +1319,113 @@ export default function Dashboard() {
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   {editingCategory ? "Update" : "Add"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Savings Goal Modal */}
+      {showSavingsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 dark:border dark:border-slate-700 rounded-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                {editingSavingsGoal ? "Edit Savings Goal" : "Add Savings Goal"}
+              </h3>
+              <button onClick={() => setShowSavingsModal(false)} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                <FiX size={24} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Goal Name *
+                </label>
+                <input
+                  type="text"
+                  value={newSavingsGoal.goalName}
+                  onChange={(e) =>
+                    setNewSavingsGoal({ ...newSavingsGoal, goalName: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-teal-400"
+                  placeholder="e.g., New Laptop, Vacation, Emergency Fund"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Target Amount *
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5">₹</span>
+                  <input
+                    type="number"
+                    value={newSavingsGoal.targetAmount || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setNewSavingsGoal({ 
+                        ...newSavingsGoal, 
+                        targetAmount: value === '' ? 0 : parseFloat(value) 
+                      });
+                    }}
+                    className="w-full pl-8 pr-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-teal-400"
+                    min="0"
+                    step="100"
+                    placeholder="10000"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Current Amount
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5">₹</span>
+                  <input
+                    type="number"
+                    value={newSavingsGoal.currentAmount || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setNewSavingsGoal({ 
+                        ...newSavingsGoal, 
+                        currentAmount: value === '' ? 0 : parseFloat(value) 
+                      });
+                    }}
+                    className="w-full pl-8 pr-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-teal-400"
+                    min="0"
+                    step="100"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Deadline (Optional)
+                </label>
+                <input
+                  type="date"
+                  value={newSavingsGoal.deadline}
+                  onChange={(e) =>
+                    setNewSavingsGoal({ ...newSavingsGoal, deadline: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-teal-400"
+                />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={() => setShowSavingsModal(false)}
+                  className="flex-1 px-4 py-2 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={
+                    editingSavingsGoal ? handleUpdateSavingsGoal : handleAddSavingsGoal
+                  }
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  {editingSavingsGoal ? "Update" : "Add"}
                 </button>
               </div>
             </div>
