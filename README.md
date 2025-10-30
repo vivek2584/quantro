@@ -1,4 +1,4 @@
-# Student Expense Tracker
+# Quantro, a Student Expense Tracker
 
 A web app for tracking expenses with budgets, categories, and analytics. Built because spreadsheets are boring.
 
