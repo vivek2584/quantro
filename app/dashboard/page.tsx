@@ -1183,7 +1183,7 @@ export default function Dashboard() {
                     </p>
                     {categories.map(
                       (cat) =>
-                        categoryBudgets[cat.id] && (
+                        categoryBudgets[cat.id] > 0 && (
                           <div
                             key={cat.id}
                             className="flex justify-between text-sm py-1"
