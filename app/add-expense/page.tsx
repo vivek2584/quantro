@@ -1,15 +1,12 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Category } from "@/types";
-import {
-  FiArrowLeft,
-  FiTag,
-  FiCalendar,
-  FiSave,
-} from "react-icons/fi";
+import { FiArrowLeft, FiTag, FiCalendar, FiSave } from "react-icons/fi";
 import { TbCurrencyRupee } from "react-icons/tb";
 import { addExpense, getCategories } from "@/lib/firestore";
 import toast, { Toaster } from "react-hot-toast";

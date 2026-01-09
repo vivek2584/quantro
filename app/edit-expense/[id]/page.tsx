@@ -1,15 +1,12 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Category, Expense } from "@/types";
-import {
-  FiArrowLeft,
-  FiTag,
-  FiCalendar,
-  FiSave,
-} from "react-icons/fi";
+import { FiArrowLeft, FiTag, FiCalendar, FiSave } from "react-icons/fi";
 import { TbCurrencyRupee } from "react-icons/tb";
 import { updateExpense, getExpenses, getCategories } from "@/lib/firestore";
 import toast, { Toaster } from "react-hot-toast";
@@ -42,17 +39,18 @@ export default function EditExpensePage() {
         ]);
 
         setCategories(categoriesData);
-        
-        const currentExpense = expensesData.find(e => e.id === expenseId);
+
+        const currentExpense = expensesData.find((e) => e.id === expenseId);
         if (currentExpense) {
           setExpense(currentExpense);
           setFormData({
             amount: currentExpense.amount.toString(),
             description: currentExpense.description,
             category: currentExpense.category,
-            date: currentExpense.date instanceof Date 
-              ? currentExpense.date.toISOString().split("T")[0]
-              : new Date(currentExpense.date).toISOString().split("T")[0],
+            date:
+              currentExpense.date instanceof Date
+                ? currentExpense.date.toISOString().split("T")[0]
+                : new Date(currentExpense.date).toISOString().split("T")[0],
           });
         } else {
           toast.error("Expense not found");
@@ -136,7 +134,9 @@ export default function EditExpensePage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
         <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400 mb-4">Expense not found</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Expense not found
+          </p>
           <button
             onClick={() => router.push("/dashboard")}
             className="px-4 py-2 bg-blue-600 dark:bg-teal-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-teal-400 shadow-sm"

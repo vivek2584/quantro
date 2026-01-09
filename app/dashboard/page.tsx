@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -92,9 +94,9 @@ export default function Dashboard() {
   const [budget, setBudget] = useState<Budget | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{
-    key: 'date' | 'amount';
-    direction: 'asc' | 'desc';
-  }>({ key: 'date', direction: 'desc' });
+    key: "date" | "amount";
+    direction: "asc" | "desc";
+  }>({ key: "date", direction: "desc" });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -108,7 +110,8 @@ export default function Dashboard() {
   }>({});
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
   const [showSavingsModal, setShowSavingsModal] = useState(false);
-  const [editingSavingsGoal, setEditingSavingsGoal] = useState<SavingsGoal | null>(null);
+  const [editingSavingsGoal, setEditingSavingsGoal] =
+    useState<SavingsGoal | null>(null);
   const [newSavingsGoal, setNewSavingsGoal] = useState({
     goalName: "",
     targetAmount: 0,
@@ -130,15 +133,15 @@ export default function Dashboard() {
 
   // Sort expenses
   const sortedExpenses = [...expenses].sort((a, b) => {
-    if (sortConfig.key === 'date') {
+    if (sortConfig.key === "date") {
       const dateA = a.date instanceof Date ? a.date : new Date(a.date);
       const dateB = b.date instanceof Date ? b.date : new Date(b.date);
-      return sortConfig.direction === 'asc' 
+      return sortConfig.direction === "asc"
         ? dateA.getTime() - dateB.getTime()
         : dateB.getTime() - dateA.getTime();
     } else {
-      return sortConfig.direction === 'asc' 
-        ? a.amount - b.amount 
+      return sortConfig.direction === "asc"
+        ? a.amount - b.amount
         : b.amount - a.amount;
     }
   });
@@ -155,37 +158,40 @@ export default function Dashboard() {
   const daysInMonth = endOfMonth(now).getDate();
   const daysPassed = now.getDate();
   const daysRemaining = daysInMonth - daysPassed;
-  
+
   // Calculate current month expenses only
-  const currentMonthExpenses = expenses.filter(expense => {
-    const expenseDate = expense.date instanceof Date ? expense.date : new Date(expense.date);
+  const currentMonthExpenses = expenses.filter((expense) => {
+    const expenseDate =
+      expense.date instanceof Date ? expense.date : new Date(expense.date);
     return expenseDate >= currentMonth && expenseDate <= now;
   });
-  const currentMonthSpent = currentMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  
+  const currentMonthSpent = currentMonthExpenses.reduce(
+    (sum, expense) => sum + expense.amount,
+    0
+  );
+
   // Spending velocity metrics
   const dailyAverageSpent = daysPassed > 0 ? currentMonthSpent / daysPassed : 0;
   const dailyBudgetAllowance = monthlyBudget / daysInMonth;
   const projectedMonthEnd = dailyAverageSpent * daysInMonth;
-  const dailyBudgetRemaining = daysRemaining > 0 ? remainingBudget / daysRemaining : 0;
+  const dailyBudgetRemaining =
+    daysRemaining > 0 ? remainingBudget / daysRemaining : 0;
   const isOnTrack = dailyAverageSpent <= dailyBudgetAllowance;
 
   // Handle sort
-  const requestSort = (key: 'date' | 'amount') => {
-    let direction: 'asc' | 'desc' = 'desc';
-    if (sortConfig.key === key && sortConfig.direction === 'desc') {
-      direction = 'asc';
+  const requestSort = (key: "date" | "amount") => {
+    let direction: "asc" | "desc" = "desc";
+    if (sortConfig.key === key && sortConfig.direction === "desc") {
+      direction = "asc";
     }
     setSortConfig({ key, direction });
   };
 
   // Sort indicator
-  const SortIndicator = ({ column }: { column: 'date' | 'amount' }) => {
+  const SortIndicator = ({ column }: { column: "date" | "amount" }) => {
     if (sortConfig.key !== column) return null;
     return (
-      <span className="ml-1">
-        {sortConfig.direction === 'asc' ? '↑' : '↓'}
-      </span>
+      <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
     );
   };
 
@@ -198,12 +204,13 @@ export default function Dashboard() {
         setIsLoading(true);
         await initializeDefaultCategories(user.uid);
 
-        const [expensesData, categoriesData, budgetData, savingsGoalsData] = await Promise.all([
-          getExpenses(user.uid),
-          getCategories(user.uid),
-          getBudget(user.uid),
-          getSavingsGoals(user.uid),
-        ]);
+        const [expensesData, categoriesData, budgetData, savingsGoalsData] =
+          await Promise.all([
+            getExpenses(user.uid),
+            getCategories(user.uid),
+            getBudget(user.uid),
+            getSavingsGoals(user.uid),
+          ]);
 
         setExpenses(expensesData);
         setCategories(categoriesData);
@@ -322,7 +329,11 @@ export default function Dashboard() {
   };
 
   const handleAddSavingsGoal = async () => {
-    if (!user || !newSavingsGoal.goalName.trim() || newSavingsGoal.targetAmount <= 0) {
+    if (
+      !user ||
+      !newSavingsGoal.goalName.trim() ||
+      newSavingsGoal.targetAmount <= 0
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -336,12 +347,15 @@ export default function Dashboard() {
       };
 
       // Only add deadline if it's not empty
-      if (newSavingsGoal.deadline && newSavingsGoal.deadline.trim() !== '') {
+      if (newSavingsGoal.deadline && newSavingsGoal.deadline.trim() !== "") {
         goalData.deadline = newSavingsGoal.deadline;
       }
 
-      console.log('Goal data being sent (should NOT have deadline if empty):', goalData);
-      console.log('Has deadline property?', 'deadline' in goalData);
+      console.log(
+        "Goal data being sent (should NOT have deadline if empty):",
+        goalData
+      );
+      console.log("Has deadline property?", "deadline" in goalData);
 
       const id = await addSavingsGoal(goalData);
 
@@ -351,19 +365,30 @@ export default function Dashboard() {
         ...newSavingsGoal,
       };
       setSavingsGoals([...savingsGoals, goal]);
-      setNewSavingsGoal({ goalName: "", targetAmount: 0, currentAmount: 0, deadline: "" });
+      setNewSavingsGoal({
+        goalName: "",
+        targetAmount: 0,
+        currentAmount: 0,
+        deadline: "",
+      });
       setShowSavingsModal(false);
       toast.success("Savings goal added successfully");
     } catch (error: any) {
       console.error("Error adding savings goal:", error);
       console.error("Error message:", error?.message);
       console.error("Error code:", error?.code);
-      toast.error(`Failed to add savings goal: ${error?.message || 'Unknown error'}`);
+      toast.error(
+        `Failed to add savings goal: ${error?.message || "Unknown error"}`
+      );
     }
   };
 
   const handleUpdateSavingsGoal = async () => {
-    if (!editingSavingsGoal || !newSavingsGoal.goalName.trim() || newSavingsGoal.targetAmount <= 0) {
+    if (
+      !editingSavingsGoal ||
+      !newSavingsGoal.goalName.trim() ||
+      newSavingsGoal.targetAmount <= 0
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -376,7 +401,7 @@ export default function Dashboard() {
       };
 
       // Only add deadline if it's not empty
-      if (newSavingsGoal.deadline && newSavingsGoal.deadline.trim() !== '') {
+      if (newSavingsGoal.deadline && newSavingsGoal.deadline.trim() !== "") {
         updateData.deadline = newSavingsGoal.deadline;
       }
 
@@ -384,13 +409,16 @@ export default function Dashboard() {
 
       setSavingsGoals(
         savingsGoals.map((g) =>
-          g.id === editingSavingsGoal.id
-            ? { ...g, ...newSavingsGoal }
-            : g
+          g.id === editingSavingsGoal.id ? { ...g, ...newSavingsGoal } : g
         )
       );
       setEditingSavingsGoal(null);
-      setNewSavingsGoal({ goalName: "", targetAmount: 0, currentAmount: 0, deadline: "" });
+      setNewSavingsGoal({
+        goalName: "",
+        targetAmount: 0,
+        currentAmount: 0,
+        deadline: "",
+      });
       setShowSavingsModal(false);
       toast.success("Savings goal updated successfully");
     } catch (error) {
@@ -456,7 +484,9 @@ export default function Dashboard() {
       {/* Sidebar */}
       <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-800 shadow-lg dark:shadow-teal-500/5 z-10 dark:border-r dark:border-slate-700">
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-teal-400">Quantro</h1>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-teal-400">
+            Quantro
+          </h1>
           <p className="text-sm text-gray-500 dark:text-slate-400">
             Welcome, {user?.email?.split("@")[0] || "User"}
           </p>
@@ -537,16 +567,20 @@ export default function Dashboard() {
             <div className="bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-800 dark:border dark:border-slate-700 p-6 rounded-xl shadow-lg flex flex-col">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">Monthly Budget</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    Monthly Budget
+                  </p>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                     ₹{monthlyBudget.toFixed(2)}
                   </h3>
                 </div>
-                <div className={`p-2 rounded-lg ${
-                  isOnTrack 
-                    ? 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400' 
-                    : 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400'
-                }`}>
+                <div
+                  className={`p-2 rounded-lg ${
+                    isOnTrack
+                      ? "bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400"
+                      : "bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400"
+                  }`}
+                >
                   <TbCurrencyRupee size={24} />
                 </div>
               </div>
@@ -554,16 +588,20 @@ export default function Dashboard() {
               {/* Progress Bar */}
               <div className="mb-4">
                 <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-600 dark:text-gray-400">₹{currentMonthSpent.toFixed(0)} spent</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{budgetPercentage.toFixed(0)}%</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    ₹{currentMonthSpent.toFixed(0)} spent
+                  </span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {budgetPercentage.toFixed(0)}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                   <div
                     className={`h-2.5 rounded-full transition-all ${
-                      budgetPercentage > 100 
-                        ? "bg-red-500" 
-                        : budgetPercentage > 80 
-                        ? "bg-amber-500" 
+                      budgetPercentage > 100
+                        ? "bg-red-500"
+                        : budgetPercentage > 80
+                        ? "bg-amber-500"
                         : "bg-green-500"
                     }`}
                     style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
@@ -574,37 +612,48 @@ export default function Dashboard() {
               {/* Key Metrics */}
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="bg-gray-50 dark:bg-slate-700/50 p-3 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Daily Avg</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">₹{dailyAverageSpent.toFixed(0)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    Daily Avg
+                  </p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    ₹{dailyAverageSpent.toFixed(0)}
+                  </p>
                 </div>
                 <div className="bg-gray-50 dark:bg-slate-700/50 p-3 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Should Spend</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">₹{dailyBudgetAllowance.toFixed(0)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    Should Spend
+                  </p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    ₹{dailyBudgetAllowance.toFixed(0)}
+                  </p>
                 </div>
               </div>
 
               {/* Status Banner */}
-              <div className={`relative overflow-hidden rounded-xl ${
-                isOnTrack 
-                  ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
-                  : 'bg-gradient-to-br from-red-500 to-rose-600'
-              }`}>
+              <div
+                className={`relative overflow-hidden rounded-xl ${
+                  isOnTrack
+                    ? "bg-gradient-to-br from-green-500 to-emerald-600"
+                    : "bg-gradient-to-br from-red-500 to-rose-600"
+                }`}
+              >
                 <div className="p-4 text-white">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-bold text-base">
-                        {isOnTrack ? 'On Track!' : 'Over Budget!'}
+                        {isOnTrack ? "On Track!" : "Over Budget!"}
                       </p>
                       <p className="text-xs text-white/80 mt-0.5">
-                        {daysRemaining} days left • ₹{dailyBudgetRemaining.toFixed(0)}/day available
+                        {daysRemaining} days left • ₹
+                        {dailyBudgetRemaining.toFixed(0)}/day available
                       </p>
                     </div>
-                    
+
                     {!isOnTrack && (
                       <div className="text-right bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg">
                         <p className="text-xs text-white/80">Projected</p>
                         <p className="text-lg font-bold">
-                          ₹{projectedMonthEnd.toLocaleString('en-IN')}
+                          ₹{projectedMonthEnd.toLocaleString("en-IN")}
                         </p>
                       </div>
                     )}
@@ -613,37 +662,57 @@ export default function Dashboard() {
               </div>
 
               {/* Category Budgets */}
-              {Object.keys(categoryBudgets).filter(catId => categoryBudgets[catId] > 0).length > 0 && (
+              {Object.keys(categoryBudgets).filter(
+                (catId) => categoryBudgets[catId] > 0
+              ).length > 0 && (
                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
-                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Category Budgets</h4>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                    Category Budgets
+                  </h4>
                   <div className="space-y-3">
                     {categories
-                      .filter(cat => categoryBudgets[cat.id] && categoryBudgets[cat.id] > 0)
+                      .filter(
+                        (cat) =>
+                          categoryBudgets[cat.id] && categoryBudgets[cat.id] > 0
+                      )
                       .map((category) => {
                         const categorySpent = expenses
-                          .filter(exp => exp.category === category.id && 
-                            new Date(exp.date) >= startOfMonth(new Date()) &&
-                            new Date(exp.date) <= endOfMonth(new Date()))
+                          .filter(
+                            (exp) =>
+                              exp.category === category.id &&
+                              new Date(exp.date) >= startOfMonth(new Date()) &&
+                              new Date(exp.date) <= endOfMonth(new Date())
+                          )
                           .reduce((sum, exp) => sum + exp.amount, 0);
                         const categoryBudget = categoryBudgets[category.id];
-                        const categoryPercentage = (categorySpent / categoryBudget) * 100;
+                        const categoryPercentage =
+                          (categorySpent / categoryBudget) * 100;
 
                         return (
                           <div key={category.id} className="space-y-1">
                             <div className="flex items-center justify-between text-xs">
                               <div className="flex items-center gap-2">
-                                <div className={`w-3 h-3 rounded-full ${category.color}`}></div>
-                                <span className="text-gray-700 dark:text-gray-300 font-medium">{category.name}</span>
+                                <div
+                                  className={`w-3 h-3 rounded-full ${category.color}`}
+                                ></div>
+                                <span className="text-gray-700 dark:text-gray-300 font-medium">
+                                  {category.name}
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="text-gray-600 dark:text-gray-400">
-                                  ₹{categorySpent.toFixed(0)} / ₹{categoryBudget.toFixed(0)}
+                                  ₹{categorySpent.toFixed(0)} / ₹
+                                  {categoryBudget.toFixed(0)}
                                 </span>
-                                <span className={`font-semibold ${
-                                  categoryPercentage > 100 ? 'text-red-600 dark:text-red-400' :
-                                  categoryPercentage > 80 ? 'text-amber-600 dark:text-amber-400' :
-                                  'text-green-600 dark:text-green-400'
-                                }`}>
+                                <span
+                                  className={`font-semibold ${
+                                    categoryPercentage > 100
+                                      ? "text-red-600 dark:text-red-400"
+                                      : categoryPercentage > 80
+                                      ? "text-amber-600 dark:text-amber-400"
+                                      : "text-green-600 dark:text-green-400"
+                                  }`}
+                                >
                                   {categoryPercentage.toFixed(0)}%
                                 </span>
                               </div>
@@ -651,11 +720,18 @@ export default function Dashboard() {
                             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                               <div
                                 className={`h-1.5 rounded-full transition-all ${
-                                  categoryPercentage > 100 ? "bg-red-500" :
-                                  categoryPercentage > 80 ? "bg-amber-500" :
-                                  "bg-green-500"
+                                  categoryPercentage > 100
+                                    ? "bg-red-500"
+                                    : categoryPercentage > 80
+                                    ? "bg-amber-500"
+                                    : "bg-green-500"
                                 }`}
-                                style={{ width: `${Math.min(categoryPercentage, 100)}%` }}
+                                style={{
+                                  width: `${Math.min(
+                                    categoryPercentage,
+                                    100
+                                  )}%`,
+                                }}
                               ></div>
                             </div>
                           </div>
@@ -731,7 +807,10 @@ export default function Dashboard() {
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {categoryBreakdown.map((category) => (
-                  <div key={category.name} className="p-4 border dark:border-gray-700 rounded-lg">
+                  <div
+                    key={category.name}
+                    className="p-4 border dark:border-gray-700 rounded-lg"
+                  >
                     <div className="flex items-center">
                       <div
                         className={`w-3 h-3 rounded-full ${category.color} mr-2`}
@@ -759,7 +838,9 @@ export default function Dashboard() {
         {activeTab === "transactions" && (
           <div className="bg-white dark:bg-slate-800 dark:border dark:border-slate-700 rounded-xl shadow overflow-hidden">
             <div className="p-4 border-b dark:border-gray-700">
-              <h3 className="font-semibold text-gray-900 dark:text-white">All Transactions</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                All Transactions
+              </h3>
             </div>
             {expenses.length === 0 ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
@@ -775,40 +856,56 @@ export default function Dashboard() {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
-                    <th 
-                      scope="col" 
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                    >
+                      Description
+                    </th>
+                    <th
+                      scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => requestSort('date')}
+                      onClick={() => requestSort("date")}
                     >
                       <div className="flex items-center">
                         Date
                         <SortIndicator column="date" />
                       </div>
                     </th>
-                    <th 
-                      scope="col" 
+                    <th
+                      scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => requestSort('amount')}
+                      onClick={() => requestSort("amount")}
                     >
                       <div className="flex items-center">
                         Amount
                         <SortIndicator column="amount" />
                       </div>
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap"
+                    >
                       Category
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                    >
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-slate-800 dark:border dark:border-slate-700 divide-y divide-gray-200 dark:divide-gray-700">
                   {sortedExpenses.map((expense) => {
-                    const category = categories.find((c) => c.id === expense.category);
+                    const category = categories.find(
+                      (c) => c.id === expense.category
+                    );
                     return (
-                      <tr key={expense.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <tr
+                        key={expense.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
                         <td className="px-6 py-4 align-middle">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {expense.description}
@@ -816,8 +913,8 @@ export default function Dashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap align-middle">
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {expense.date instanceof Date 
-                              ? expense.date.toLocaleDateString() 
+                            {expense.date instanceof Date
+                              ? expense.date.toLocaleDateString()
                               : new Date(expense.date).toLocaleDateString()}
                           </div>
                         </td>
@@ -829,23 +926,27 @@ export default function Dashboard() {
                         <td className="px-6 py-4 whitespace-nowrap align-middle">
                           <div className="flex items-center">
                             <div
-                              className={`h-3 w-3 rounded-full mr-2 flex-shrink-0 ${category?.color || 'bg-gray-500'}`}
+                              className={`h-3 w-3 rounded-full mr-2 flex-shrink-0 ${
+                                category?.color || "bg-gray-500"
+                              }`}
                             />
                             <span className="text-sm font-medium text-gray-900 dark:text-white">
-                              {category?.name || 'Uncategorized'}
+                              {category?.name || "Uncategorized"}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right align-middle">
                           <div className="flex justify-end space-x-2">
                             <Link
-                              href={`/edit-expense/${expense.id || ''}`}
+                              href={`/edit-expense/${expense.id || ""}`}
                               className="text-blue-600 hover:text-blue-900"
                             >
                               <FiEdit2 className="h-5 w-5" />
                             </Link>
                             <button
-                              onClick={() => expense.id && handleDeleteExpense(expense.id)}
+                              onClick={() =>
+                                expense.id && handleDeleteExpense(expense.id)
+                              }
                               className="text-red-600 hover:text-red-900"
                             >
                               <FiTrash2 className="h-5 w-5" />
@@ -936,7 +1037,10 @@ export default function Dashboard() {
                       <Tooltip />
                       <Bar dataKey="value">
                         {categoryBreakdown.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={getColorHex(entry.color)} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={getColorHex(entry.color)}
+                          />
                         ))}
                       </Bar>
                     </BarChart>
@@ -958,7 +1062,12 @@ export default function Dashboard() {
               <button
                 onClick={() => {
                   setEditingSavingsGoal(null);
-                  setNewSavingsGoal({ goalName: "", targetAmount: 0, currentAmount: 0, deadline: "" });
+                  setNewSavingsGoal({
+                    goalName: "",
+                    targetAmount: 0,
+                    currentAmount: 0,
+                    deadline: "",
+                  });
                   setShowSavingsModal(true);
                 }}
                 className="flex items-center px-4 py-2 bg-blue-600 dark:bg-teal-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-teal-400 transition-colors shadow-sm"
@@ -971,14 +1080,22 @@ export default function Dashboard() {
             {/* Savings Goals Grid */}
             {savingsGoals.length === 0 ? (
               <div className="bg-white dark:bg-slate-800 dark:border dark:border-slate-700 p-12 rounded-xl shadow text-center">
-                <FiTarget className="mx-auto text-gray-400 dark:text-gray-600 mb-4" size={48} />
+                <FiTarget
+                  className="mx-auto text-gray-400 dark:text-gray-600 mb-4"
+                  size={48}
+                />
                 <p className="text-gray-500 dark:text-gray-400 mb-4">
                   No savings goals yet. Start by creating your first goal!
                 </p>
                 <button
                   onClick={() => {
                     setEditingSavingsGoal(null);
-                    setNewSavingsGoal({ goalName: "", targetAmount: 0, currentAmount: 0, deadline: "" });
+                    setNewSavingsGoal({
+                      goalName: "",
+                      targetAmount: 0,
+                      currentAmount: 0,
+                      deadline: "",
+                    });
                     setShowSavingsModal(true);
                   }}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -989,10 +1106,15 @@ export default function Dashboard() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {savingsGoals.map((goal) => {
-                  const progress = (goal.currentAmount / goal.targetAmount) * 100;
+                  const progress =
+                    (goal.currentAmount / goal.targetAmount) * 100;
                   const isCompleted = progress >= 100;
-                  const daysLeft = goal.deadline 
-                    ? Math.ceil((new Date(goal.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+                  const daysLeft = goal.deadline
+                    ? Math.ceil(
+                        (new Date(goal.deadline).getTime() -
+                          new Date().getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )
                     : null;
 
                   return (
@@ -1006,18 +1128,20 @@ export default function Dashboard() {
                             {goal.goalName}
                           </h3>
                           {goal.deadline && (
-                            <p className={`text-sm ${
-                              daysLeft && daysLeft < 0 
-                                ? 'text-red-600 dark:text-red-400' 
-                                : daysLeft && daysLeft < 30 
-                                ? 'text-amber-600 dark:text-amber-400' 
-                                : 'text-gray-500 dark:text-gray-400'
-                            }`}>
-                              {daysLeft && daysLeft < 0 
+                            <p
+                              className={`text-sm ${
+                                daysLeft && daysLeft < 0
+                                  ? "text-red-600 dark:text-red-400"
+                                  : daysLeft && daysLeft < 30
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : "text-gray-500 dark:text-gray-400"
+                              }`}
+                            >
+                              {daysLeft && daysLeft < 0
                                 ? `Overdue by ${Math.abs(daysLeft)} days`
-                                : daysLeft 
+                                : daysLeft
                                 ? `${daysLeft} days left`
-                                : 'No deadline'}
+                                : "No deadline"}
                             </p>
                           )}
                         </div>
@@ -1029,10 +1153,12 @@ export default function Dashboard() {
                                 goalName: goal.goalName,
                                 targetAmount: goal.targetAmount,
                                 currentAmount: goal.currentAmount,
-                                deadline: goal.deadline 
-                                  ? (goal.deadline instanceof Date 
-                                    ? goal.deadline.toISOString().split('T')[0] 
-                                    : new Date(goal.deadline).toISOString().split('T')[0])
+                                deadline: goal.deadline
+                                  ? goal.deadline instanceof Date
+                                    ? goal.deadline.toISOString().split("T")[0]
+                                    : new Date(goal.deadline)
+                                        .toISOString()
+                                        .split("T")[0]
                                   : "",
                               });
                               setShowSavingsModal(true);
@@ -1042,7 +1168,9 @@ export default function Dashboard() {
                             <FiEdit2 size={18} />
                           </button>
                           <button
-                            onClick={() => goal.id && handleDeleteSavingsGoal(goal.id)}
+                            onClick={() =>
+                              goal.id && handleDeleteSavingsGoal(goal.id)
+                            }
                             className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                           >
                             <FiTrash2 size={18} />
@@ -1054,25 +1182,27 @@ export default function Dashboard() {
                       <div className="mb-4">
                         <div className="flex justify-between text-sm mb-2">
                           <span className="text-gray-600 dark:text-gray-400">
-                            ₹{goal.currentAmount.toLocaleString('en-IN')} saved
+                            ₹{goal.currentAmount.toLocaleString("en-IN")} saved
                           </span>
-                          <span className={`font-semibold ${
-                            isCompleted 
-                              ? 'text-green-600 dark:text-green-400' 
-                              : 'text-gray-900 dark:text-white'
-                          }`}>
+                          <span
+                            className={`font-semibold ${
+                              isCompleted
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-gray-900 dark:text-white"
+                            }`}
+                          >
                             {Math.min(progress, 100).toFixed(0)}%
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                           <div
                             className={`h-3 rounded-full transition-all ${
-                              isCompleted 
-                                ? "bg-green-500" 
-                                : progress > 75 
-                                ? "bg-blue-500" 
-                                : progress > 50 
-                                ? "bg-teal-500" 
+                              isCompleted
+                                ? "bg-green-500"
+                                : progress > 75
+                                ? "bg-blue-500"
+                                : progress > 50
+                                ? "bg-teal-500"
                                 : "bg-amber-500"
                             }`}
                             style={{ width: `${Math.min(progress, 100)}%` }}
@@ -1083,21 +1213,29 @@ export default function Dashboard() {
                       {/* Target Amount */}
                       <div className="pt-4 border-t dark:border-gray-700">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Target</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Target
+                          </span>
                           <span className="text-lg font-bold text-gray-900 dark:text-white">
-                            ₹{goal.targetAmount.toLocaleString('en-IN')}
+                            ₹{goal.targetAmount.toLocaleString("en-IN")}
                           </span>
                         </div>
                         <div className="flex justify-between items-center mt-2">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Remaining</span>
-                          <span className={`text-sm font-semibold ${
-                            isCompleted 
-                              ? 'text-green-600 dark:text-green-400' 
-                              : 'text-gray-900 dark:text-white'
-                          }`}>
-                            {isCompleted 
-                              ? 'Goal Achieved! 🎉' 
-                              : `₹${(goal.targetAmount - goal.currentAmount).toLocaleString('en-IN')}`}
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Remaining
+                          </span>
+                          <span
+                            className={`text-sm font-semibold ${
+                              isCompleted
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-gray-900 dark:text-white"
+                            }`}
+                          >
+                            {isCompleted
+                              ? "Goal Achieved! 🎉"
+                              : `₹${(
+                                  goal.targetAmount - goal.currentAmount
+                                ).toLocaleString("en-IN")}`}
                           </span>
                         </div>
                       </div>
@@ -1119,13 +1257,19 @@ export default function Dashboard() {
                   <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg">
                     <p className="text-sm text-white/80 mb-1">Total Saved</p>
                     <p className="text-2xl font-bold">
-                      ₹{savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0).toLocaleString('en-IN')}
+                      ₹
+                      {savingsGoals
+                        .reduce((sum, g) => sum + g.currentAmount, 0)
+                        .toLocaleString("en-IN")}
                     </p>
                   </div>
                   <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg">
                     <p className="text-sm text-white/80 mb-1">Target Amount</p>
                     <p className="text-2xl font-bold">
-                      ₹{savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0).toLocaleString('en-IN')}
+                      ₹
+                      {savingsGoals
+                        .reduce((sum, g) => sum + g.targetAmount, 0)
+                        .toLocaleString("en-IN")}
                     </p>
                   </div>
                 </div>
@@ -1188,7 +1332,9 @@ export default function Dashboard() {
                             key={cat.id}
                             className="flex justify-between text-sm py-1"
                           >
-                            <span className="text-gray-700 dark:text-gray-300">{cat.name}</span>
+                            <span className="text-gray-700 dark:text-gray-300">
+                              {cat.name}
+                            </span>
                             <span className="font-semibold">
                               ₹{categoryBudgets[cat.id].toFixed(2)}
                             </span>
@@ -1268,7 +1414,10 @@ export default function Dashboard() {
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {editingCategory ? "Edit Category" : "Add Category"}
               </h3>
-              <button onClick={() => setShowCategoryModal(false)} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              <button
+                onClick={() => setShowCategoryModal(false)}
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              >
                 <FiX size={24} />
               </button>
             </div>
@@ -1334,7 +1483,10 @@ export default function Dashboard() {
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {editingSavingsGoal ? "Edit Savings Goal" : "Add Savings Goal"}
               </h3>
-              <button onClick={() => setShowSavingsModal(false)} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              <button
+                onClick={() => setShowSavingsModal(false)}
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              >
                 <FiX size={24} />
               </button>
             </div>
@@ -1347,7 +1499,10 @@ export default function Dashboard() {
                   type="text"
                   value={newSavingsGoal.goalName}
                   onChange={(e) =>
-                    setNewSavingsGoal({ ...newSavingsGoal, goalName: e.target.value })
+                    setNewSavingsGoal({
+                      ...newSavingsGoal,
+                      goalName: e.target.value,
+                    })
                   }
                   className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-teal-400"
                   placeholder="e.g., New Laptop, Vacation, Emergency Fund"
@@ -1361,12 +1516,12 @@ export default function Dashboard() {
                   <span className="absolute left-3 top-2.5">₹</span>
                   <input
                     type="number"
-                    value={newSavingsGoal.targetAmount || ''}
+                    value={newSavingsGoal.targetAmount || ""}
                     onChange={(e) => {
                       const value = e.target.value;
-                      setNewSavingsGoal({ 
-                        ...newSavingsGoal, 
-                        targetAmount: value === '' ? 0 : parseFloat(value) 
+                      setNewSavingsGoal({
+                        ...newSavingsGoal,
+                        targetAmount: value === "" ? 0 : parseFloat(value),
                       });
                     }}
                     className="w-full pl-8 pr-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-teal-400"
@@ -1384,12 +1539,12 @@ export default function Dashboard() {
                   <span className="absolute left-3 top-2.5">₹</span>
                   <input
                     type="number"
-                    value={newSavingsGoal.currentAmount || ''}
+                    value={newSavingsGoal.currentAmount || ""}
                     onChange={(e) => {
                       const value = e.target.value;
-                      setNewSavingsGoal({ 
-                        ...newSavingsGoal, 
-                        currentAmount: value === '' ? 0 : parseFloat(value) 
+                      setNewSavingsGoal({
+                        ...newSavingsGoal,
+                        currentAmount: value === "" ? 0 : parseFloat(value),
                       });
                     }}
                     className="w-full pl-8 pr-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-teal-400"
@@ -1407,7 +1562,10 @@ export default function Dashboard() {
                   type="date"
                   value={newSavingsGoal.deadline}
                   onChange={(e) =>
-                    setNewSavingsGoal({ ...newSavingsGoal, deadline: e.target.value })
+                    setNewSavingsGoal({
+                      ...newSavingsGoal,
+                      deadline: e.target.value,
+                    })
                   }
                   className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-teal-400"
                 />
@@ -1421,7 +1579,9 @@ export default function Dashboard() {
                 </button>
                 <button
                   onClick={
-                    editingSavingsGoal ? handleUpdateSavingsGoal : handleAddSavingsGoal
+                    editingSavingsGoal
+                      ? handleUpdateSavingsGoal
+                      : handleAddSavingsGoal
                   }
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
@@ -1438,8 +1598,13 @@ export default function Dashboard() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-800 dark:border dark:border-slate-700 rounded-xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Set Budget</h3>
-              <button onClick={() => setShowBudgetModal(false)} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Set Budget
+              </h3>
+              <button
+                onClick={() => setShowBudgetModal(false)}
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              >
                 <FiX size={24} />
               </button>
             </div>
@@ -1452,10 +1617,12 @@ export default function Dashboard() {
                   <span className="absolute left-3 top-2.5">₹</span>
                   <input
                     type="number"
-                    value={monthlyBudgetAmount || ''}
+                    value={monthlyBudgetAmount || ""}
                     onChange={(e) => {
                       const value = e.target.value;
-                      setMonthlyBudgetAmount(value === '' ? 0 : parseFloat(value));
+                      setMonthlyBudgetAmount(
+                        value === "" ? 0 : parseFloat(value)
+                      );
                     }}
                     className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-teal-400"
                     min="0"
@@ -1475,9 +1642,13 @@ export default function Dashboard() {
                     <div
                       className={`w-4 h-4 rounded-full ${category.color}`}
                     ></div>
-                    <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">{category.name}</span>
+                    <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">
+                      {category.name}
+                    </span>
                     <div className="relative w-32">
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-gray-600 dark:text-gray-400">₹</span>
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-gray-600 dark:text-gray-400">
+                        ₹
+                      </span>
                       <input
                         type="number"
                         value={categoryBudgets[category.id] || ""}
@@ -1543,6 +1714,6 @@ const NavItem = ({
       {label}
     </button>
   );
-}
+};
 
 // ... (rest of the code remains the same)
