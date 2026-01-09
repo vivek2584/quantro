@@ -1,3 +1,5 @@
+"use client";
+
 // Firebase v9+ modular SDK
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
